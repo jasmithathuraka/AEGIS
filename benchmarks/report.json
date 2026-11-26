@@ -1,0 +1,133 @@
+{
+  "project": "AEGIS",
+  "report_type": "recorded_engine_benchmark",
+  "generated_at": "2026-11-26T15:21:31.988814+00:00",
+  "environment": {
+    "operating_system": "macOS-15.5-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "processor": "arm",
+    "python_version": "3.13.17",
+    "compiler": {
+      "command": "clang++",
+      "version": "Apple clang version 17.0.0 (clang-1700.0.13.5)"
+    },
+    "cpp_standard": "C++20",
+    "optimization": "-O2"
+  },
+  "configuration": {
+    "workloads": [
+      1000,
+      5000,
+      10000
+    ],
+    "warmup_runs": 2,
+    "measured_repetitions": 7,
+    "random_seed": 42,
+    "timing_scope": "Engine event-processing loop only. Generation, input parsing, process startup, and result serialization are excluded."
+  },
+  "results": [
+    {
+      "event_count": 1000,
+      "python": {
+        "median_seconds": 0.01620141603052616,
+        "events_per_second": 61722.99989802334,
+        "samples_seconds": [
+          0.01620141603052616,
+          0.016280459007248282,
+          0.016386958071962,
+          0.016076166881248355,
+          0.016224083956331015,
+          0.016153583070263267,
+          0.016160415951162577
+        ]
+      },
+      "cpp": {
+        "median_seconds": 0.000310708,
+        "events_per_second": 3218455.913590896,
+        "samples_seconds": [
+          0.000309125,
+          0.000304125,
+          0.000297625,
+          0.000310833,
+          0.000319083,
+          0.00031425,
+          0.000310708
+        ]
+      },
+      "cpp_speedup": 52.14354323199326,
+      "correctness": {
+        "final_state_match": true,
+        "comparisons": 9
+      }
+    },
+    {
+      "event_count": 5000,
+      "python": {
+        "median_seconds": 0.34830466704443097,
+        "events_per_second": 14355.248358937959,
+        "samples_seconds": [
+          0.34950433298945427,
+          0.34830466704443097,
+          0.3482159171253443,
+          0.34618424996733665,
+          0.3694742498919368,
+          0.347408666042611,
+          0.3488446669653058
+        ]
+      },
+      "cpp": {
+        "median_seconds": 0.001609,
+        "events_per_second": 3107520.1988812927,
+        "samples_seconds": [
+          0.001627708,
+          0.001707,
+          0.0015625,
+          0.001611583,
+          0.001609,
+          0.00154725,
+          0.001604292
+        ]
+      },
+      "cpp_speedup": 216.47275764103853,
+      "correctness": {
+        "final_state_match": true,
+        "comparisons": 9
+      }
+    },
+    {
+      "event_count": 10000,
+      "python": {
+        "median_seconds": 1.3770530000329018,
+        "events_per_second": 7261.884618646538,
+        "samples_seconds": [
+          1.3666129580233246,
+          1.3637172498274595,
+          1.3731128750368953,
+          1.3847715000156313,
+          1.393645541043952,
+          1.3770530000329018,
+          1.5634317500516772
+        ]
+      },
+      "cpp": {
+        "median_seconds": 0.003346708,
+        "events_per_second": 2988010.905044599,
+        "samples_seconds": [
+          0.00335475,
+          0.003335459,
+          0.003293125,
+          0.003305583,
+          0.003495583,
+          0.003346708,
+          0.003461083
+        ]
+      },
+      "cpp_speedup": 411.4649380922691,
+      "correctness": {
+        "final_state_match": true,
+        "comparisons": 9
+      }
+    }
+  ],
+  "all_final_states_match": true
+}

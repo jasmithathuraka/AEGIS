@@ -1,8 +1,8 @@
 
 """AEGIS FastAPI application with live Coinbase market data.
 
-Real Coinbase BTC-USD prices are reference data.
-All AEGIS orders, matching, trades, and executions are simulated.
+Coinbase BTC-USD prices are real reference data. All AEGIS orders,
+matching, trades, and executions remain simulated.
 """
 
 from __future__ import annotations
@@ -28,6 +28,8 @@ from starlette.concurrency import run_in_threadpool
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_DIR = PROJECT_ROOT / "src"
 FRONTEND_FILE = PROJECT_ROOT / "frontend" / "index.html"
+BENCHMARK_FRONTEND_FILE = PROJECT_ROOT / "frontend" / "benchmark.html"
+BENCHMARK_REPORT = PROJECT_ROOT / "benchmarks" / "report.json"
 CPP_EXECUTABLE = PROJECT_ROOT / "build" / "aegis_engine"
 
 if str(SOURCE_DIR) not in sys.path:
@@ -36,20 +38,13 @@ if str(SOURCE_DIR) not in sys.path:
 from aegis.differential import compare_engines, run_python_engine  # noqa: E402
 from aegis.generator import generate_events  # noqa: E402
 from aegis.runner import run_events  # noqa: E402
-from aegis.mutation import (  # noqa: E402
-    run_mutation_tests,
-    run_reference_mutation_tests,
-)
 
 APP_VERSION = "1.3.0"
-
 COINBASE_REST_URL = "https://api.coinbase.com/v2/prices/BTC-USD/spot"
 COINBASE_WS_URL = "wss://ws-feed.exchange.coinbase.com"
-
 MARKET_TIMEOUT_SECONDS = 8.0
 MARKET_STALE_AFTER_SECONDS = 30.0
 MAX_EVENTS = 1_000
-
 RECONNECT_MIN_SECONDS = 1.0
 RECONNECT_MAX_SECONDS = 30.0
 
@@ -369,85 +364,6 @@ def _build_simulation_response(
     }
 
 
-def _mutation_result_to_dict(result: Any) -> dict[str, Any]:
-    """Convert one mutation result into a JSON-safe dictionary."""
-
-    return {
-        "name": result.name,
-        "detected": result.detected,
-        "status": "DETECTED" if result.detected else "SURVIVED",
-        "violations": list(result.violations),
-        "detection_methods": list(result.detection_methods),
-    }
-
-
-def _mutation_report_to_dict(
-    report: Any,
-    engine_name: str,
-) -> dict[str, Any]:
-    """Convert a mutation report and its individual results."""
-
-    return {
-        "engine": engine_name,
-        "total": report.total,
-        "detected": report.detected,
-        "survived": report.survived,
-        "score": round(report.score, 1),
-        "results": [
-            _mutation_result_to_dict(result)
-            for result in report.results
-        ],
-    }
-
-
-def _build_mutation_response() -> dict[str, Any]:
-    """Run both actual mutation suites and build the dashboard response."""
-
-    python_report = run_mutation_tests()
-    reference_report = run_reference_mutation_tests()
-
-    python_data = _mutation_report_to_dict(
-        python_report,
-        "Python",
-    )
-
-    reference_data = _mutation_report_to_dict(
-        reference_report,
-        "Reference",
-    )
-
-    total = python_report.total + reference_report.total
-    detected = python_report.detected + reference_report.detected
-    survived = total - detected
-
-    overall_score = (
-        detected / total * 100
-        if total
-        else 0.0
-    )
-
-    return {
-        "status": "completed",
-        "scope": [
-            "Python engine",
-            "Independent reference engine",
-        ],
-        "cpp_mutation_testing": False,
-        "total": total,
-        "detected": detected,
-        "survived": survived,
-        "score": round(overall_score, 1),
-        "reports": [
-            python_data,
-            reference_data,
-        ],
-        "disclaimer": (
-            "These results cover the Python and reference engines only. "
-            "The C++ engine is not included in this mutation report."
-        ),
-    }
-
-
 @app.get("/", include_in_schema=False)
 def dashboard() -> FileResponse:
     if not FRONTEND_FILE.is_file():
@@ -457,6 +373,17 @@ def dashboard() -> FileResponse:
         )
 
     return FileResponse(FRONTEND_FILE)
+
+
+@app.get("/benchmark", include_in_schema=False)
+def benchmark_dashboard() -> FileResponse:
+    if not BENCHMARK_FRONTEND_FILE.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail="Benchmark dashboard file not found",
+        )
+
+    return FileResponse(BENCHMARK_FRONTEND_FILE)
 
 
 @app.get("/health")
@@ -469,6 +396,8 @@ def health() -> dict[str, Any]:
         "python_engine": True,
         "reference_engine": True,
         "cpp_engine": cpp_available,
+        "benchmark_report": BENCHMARK_REPORT.is_file(),
+        "benchmark_dashboard": BENCHMARK_FRONTEND_FILE.is_file(),
         "market_data": (
             "Coinbase Exchange WebSocket ticker with REST fallback"
         ),
@@ -480,6 +409,39 @@ def health() -> dict[str, Any]:
         "execution": "simulated only",
         "max_events_per_run": MAX_EVENTS,
     }
+
+
+@app.get("/benchmark/report")
+def benchmark_report() -> dict[str, Any]:
+    """Return the locally generated, recorded benchmark report."""
+
+    if not BENCHMARK_REPORT.is_file():
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Benchmark report not found. Run "
+                "benchmarks/benchmark.py and include benchmarks/report.json "
+                "in the deployment."
+            ),
+        )
+
+    try:
+        with BENCHMARK_REPORT.open("r", encoding="utf-8") as report_file:
+            report = json.load(report_file)
+
+    except (OSError, json.JSONDecodeError) as error:
+        raise HTTPException(
+            status_code=500,
+            detail="Benchmark report could not be read.",
+        ) from error
+
+    if not isinstance(report, dict):
+        raise HTTPException(
+            status_code=500,
+            detail="Benchmark report has an invalid format.",
+        )
+
+    return report
 
 
 @app.get("/market")
@@ -553,22 +515,6 @@ async def simulate(
         raise HTTPException(
             status_code=500,
             detail=f"Simulation failed: {error}",
-        ) from error
-
-
-@app.get("/mutation/report")
-async def mutation_report() -> dict[str, Any]:
-    """Return real mutation-testing results for the dashboard."""
-
-    try:
-        return await run_in_threadpool(
-            _build_mutation_response
-        )
-
-    except Exception as error:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Mutation testing failed: {error}",
         ) from error
 
 

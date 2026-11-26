@@ -1,3 +1,4 @@
+
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -6,7 +7,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Build tools and the JSON header required by the C++ JSONL executable.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends g++ nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -18,8 +18,8 @@ COPY src/ ./src/
 COPY backend/ ./backend/
 COPY cpp/ ./cpp/
 COPY frontend/ ./frontend/
+COPY benchmarks/ ./benchmarks/
 
-# Always compile for the deployment platform. Do not ship the local Mac binary.
 RUN mkdir -p build \
     && g++ -std=c++20 -O2 -Wall -Wextra -Wpedantic \
        -Icpp/include \
