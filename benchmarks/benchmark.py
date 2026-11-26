@@ -9,6 +9,7 @@ from pathlib import Path
 from aegis.generator import generate_events
 from aegis.exchange import Exchange
 
+
 ROOT = Path(__file__).resolve().parents[1]
 
 CPP_SOURCE = ROOT / "cpp" / "src" / "benchmark.cpp"
@@ -16,7 +17,8 @@ CPP_ENGINE = ROOT / "cpp" / "src" / "exchange.cpp"
 CPP_EXECUTABLE = ROOT / "aegis_cpp_benchmark"
 
 WORKLOADS = [1000, 5000, 10000]
-REPEATS = 5
+WARMUP_RUNS = 2
+REPEATS = 7
 
 
 def build_cpp():
@@ -104,21 +106,29 @@ def run_cpp(event_path):
     )
 
     output = json.loads(result.stdout)
-
     elapsed = output.pop("elapsed_seconds")
 
     return elapsed, output
 
 
+def verify_states(python_result, cpp_result, count):
+    if python_result != cpp_result:
+        raise RuntimeError(
+            f"Final exchange state mismatch for {count} events"
+        )
+
+
 def main():
     build_cpp()
 
-    print("\nAEGIS FAIR ENGINE BENCHMARK")
-    print("=" * 78)
-    print(f"Workload repetitions: {REPEATS}")
-    print("Timing excludes event generation, JSON parsing and process startup.")
-    print("Full final order state and trade history are compared.")
-    print("-" * 78)
+    print("\nAEGIS ENGINE BENCHMARK")
+    print("=" * 82)
+    print(f"Warm-up runs per implementation: {WARMUP_RUNS}")
+    print(f"Measured repetitions: {REPEATS}")
+    print("Event generation and input parsing are excluded from timing.")
+    print("Final order state and complete trade history are compared.")
+    print("Execution order alternates between implementations.")
+    print("-" * 82)
 
     print(
         f"{'Events':>10} "
@@ -127,7 +137,7 @@ def main():
         f"{'C++ speedup':>14}"
     )
 
-    print("-" * 78)
+    print("-" * 82)
 
     for count in WORKLOADS:
         events = generate_events(seed=42, event_count=count)
@@ -142,17 +152,25 @@ def main():
         try:
             write_jsonl(events, event_path)
 
+            # Warm-up: not included in measured timings.
+            for _ in range(WARMUP_RUNS):
+                py_time, py_state = run_python(events)
+                cpp_time, cpp_state = run_cpp(event_path)
+                verify_states(py_state, cpp_state, count)
+
             python_times = []
             cpp_times = []
 
-            for _ in range(REPEATS):
-                py_time, py_state = run_python(events)
-                cpp_time, cpp_state = run_cpp(event_path)
+            # Alternate which implementation runs first.
+            for repetition in range(REPEATS):
+                if repetition % 2 == 0:
+                    py_time, py_state = run_python(events)
+                    cpp_time, cpp_state = run_cpp(event_path)
+                else:
+                    cpp_time, cpp_state = run_cpp(event_path)
+                    py_time, py_state = run_python(events)
 
-                if py_state != cpp_state:
-                    raise RuntimeError(
-                        f"Full state mismatch for {count} events"
-                    )
+                verify_states(py_state, cpp_state, count)
 
                 python_times.append(py_time)
                 cpp_times.append(cpp_time)
@@ -176,8 +194,12 @@ def main():
         finally:
             event_path.unlink(missing_ok=True)
 
-    print("-" * 78)
-    print("All workloads completed with matching final exchange states.")
+    print("-" * 82)
+    print("PASS: all workloads produced matching final exchange states.")
+    print(
+        "Note: speedup values describe these implementations and "
+        "workloads only."
+    )
 
 
 if __name__ == "__main__":
