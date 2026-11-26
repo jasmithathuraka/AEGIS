@@ -1,8 +1,8 @@
 
-"""AEGIS FastAPI application with a persistent Coinbase market-data feed.
+"""AEGIS FastAPI application with live Coinbase market data.
 
-Real Coinbase BTC-USD market prices are reference data. All AEGIS orders,
-matching, trades, and executions remain simulated.
+Real Coinbase BTC-USD prices are reference data.
+All AEGIS orders, matching, trades, and executions are simulated.
 """
 
 from __future__ import annotations
@@ -36,13 +36,20 @@ if str(SOURCE_DIR) not in sys.path:
 from aegis.differential import compare_engines, run_python_engine  # noqa: E402
 from aegis.generator import generate_events  # noqa: E402
 from aegis.runner import run_events  # noqa: E402
+from aegis.mutation import (  # noqa: E402
+    run_mutation_tests,
+    run_reference_mutation_tests,
+)
 
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
+
 COINBASE_REST_URL = "https://api.coinbase.com/v2/prices/BTC-USD/spot"
 COINBASE_WS_URL = "wss://ws-feed.exchange.coinbase.com"
+
 MARKET_TIMEOUT_SECONDS = 8.0
 MARKET_STALE_AFTER_SECONDS = 30.0
 MAX_EVENTS = 1_000
+
 RECONNECT_MIN_SECONDS = 1.0
 RECONNECT_MAX_SECONDS = 30.0
 
@@ -110,7 +117,6 @@ async def coinbase_feed_loop() -> None:
 
     backoff = RECONNECT_MIN_SECONDS
 
-    # Use certifi's trusted CA bundle for verified TLS connections.
     ssl_context = ssl.create_default_context(
         cafile=certifi.where()
     )
@@ -363,6 +369,85 @@ def _build_simulation_response(
     }
 
 
+def _mutation_result_to_dict(result: Any) -> dict[str, Any]:
+    """Convert one mutation result into a JSON-safe dictionary."""
+
+    return {
+        "name": result.name,
+        "detected": result.detected,
+        "status": "DETECTED" if result.detected else "SURVIVED",
+        "violations": list(result.violations),
+        "detection_methods": list(result.detection_methods),
+    }
+
+
+def _mutation_report_to_dict(
+    report: Any,
+    engine_name: str,
+) -> dict[str, Any]:
+    """Convert a mutation report and its individual results."""
+
+    return {
+        "engine": engine_name,
+        "total": report.total,
+        "detected": report.detected,
+        "survived": report.survived,
+        "score": round(report.score, 1),
+        "results": [
+            _mutation_result_to_dict(result)
+            for result in report.results
+        ],
+    }
+
+
+def _build_mutation_response() -> dict[str, Any]:
+    """Run both actual mutation suites and build the dashboard response."""
+
+    python_report = run_mutation_tests()
+    reference_report = run_reference_mutation_tests()
+
+    python_data = _mutation_report_to_dict(
+        python_report,
+        "Python",
+    )
+
+    reference_data = _mutation_report_to_dict(
+        reference_report,
+        "Reference",
+    )
+
+    total = python_report.total + reference_report.total
+    detected = python_report.detected + reference_report.detected
+    survived = total - detected
+
+    overall_score = (
+        detected / total * 100
+        if total
+        else 0.0
+    )
+
+    return {
+        "status": "completed",
+        "scope": [
+            "Python engine",
+            "Independent reference engine",
+        ],
+        "cpp_mutation_testing": False,
+        "total": total,
+        "detected": detected,
+        "survived": survived,
+        "score": round(overall_score, 1),
+        "reports": [
+            python_data,
+            reference_data,
+        ],
+        "disclaimer": (
+            "These results cover the Python and reference engines only. "
+            "The C++ engine is not included in this mutation report."
+        ),
+    }
+
+
 @app.get("/", include_in_schema=False)
 def dashboard() -> FileResponse:
     if not FRONTEND_FILE.is_file():
@@ -441,7 +526,6 @@ async def market_websocket(websocket: WebSocket) -> None:
         })
 
         while True:
-            # Keep the client connection open.
             await websocket.receive_text()
 
     except WebSocketDisconnect:
@@ -469,6 +553,22 @@ async def simulate(
         raise HTTPException(
             status_code=500,
             detail=f"Simulation failed: {error}",
+        ) from error
+
+
+@app.get("/mutation/report")
+async def mutation_report() -> dict[str, Any]:
+    """Return real mutation-testing results for the dashboard."""
+
+    try:
+        return await run_in_threadpool(
+            _build_mutation_response
+        )
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Mutation testing failed: {error}",
         ) from error
 
 

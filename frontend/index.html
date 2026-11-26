@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -855,7 +854,155 @@ select {
     font-size: 9px;
     text-align: right;
 }
+/* MUTATION TESTING */
+.mutation-section { margin-top: 78px; }
 
+.mutation-intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.mutation-intro p {
+    max-width: 680px;
+    color: #9ba8bc;
+    font-size: 12px;
+    line-height: 1.9;
+}
+
+.mutation-run {
+    padding: 13px 18px;
+    border: 1px solid rgba(167,139,250,.55);
+    border-radius: 5px;
+    background: linear-gradient(110deg,rgba(167,139,250,.18),rgba(93,227,242,.12));
+    color: #d8ccff;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+.mutation-run:disabled { opacity: .5; cursor: wait; }
+
+.mutation-summary {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    border: 1px solid var(--border);
+    background: rgba(10,15,25,.65);
+    margin-bottom: 16px;
+}
+
+.mutation-stat {
+    padding: 21px 23px;
+    border-right: 1px solid var(--border);
+}
+
+.mutation-stat:last-child { border-right: 0; }
+
+.mutation-stat-label {
+    color: #8996ac;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1.2px;
+}
+
+.mutation-stat-value {
+    margin-top: 12px;
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.mutation-engine-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.mutation-engine-title {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 18px 0;
+    font-family: var(--font-display);
+    font-size: 16px;
+}
+
+.mutation-score {
+    color: var(--mint);
+    font-family: var(--font-mono);
+    font-size: 10px;
+}
+
+.mutation-row {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) auto;
+    gap: 14px;
+    padding: 14px 0;
+    border-top: 1px solid rgba(174,195,230,.09);
+}
+
+.mutation-name {
+    color: #dce5f5;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.mutation-methods {
+    margin-top: 5px;
+    color: #7f8da4;
+    font-size: 10px;
+    line-height: 1.6;
+}
+
+.mutation-status {
+    padding: 5px 8px;
+    border: 1px solid rgba(101,242,194,.25);
+    border-radius: 3px;
+    color: var(--mint);
+    background: rgba(101,242,194,.06);
+    font-family: var(--font-mono);
+    font-size: 8px;
+    white-space: nowrap;
+}
+
+.mutation-status.survived {
+    border-color: rgba(255,130,158,.3);
+    color: var(--rose);
+    background: rgba(255,130,158,.06);
+}
+
+.mutation-disclaimer {
+    margin-top: 16px;
+    padding: 15px 17px;
+    border-left: 2px solid var(--gold);
+    background: rgba(244,200,121,.055);
+    color: #aeb8c9;
+    font-size: 10px;
+    line-height: 1.8;
+}
+
+.mutation-empty {
+    color: #8290a6;
+    font-size: 11px;
+    line-height: 1.8;
+}
+
+@media (max-width:1000px) {
+    .mutation-engine-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width:650px) {
+    .mutation-intro { flex-direction: column; }
+    .mutation-run { width: 100%; }
+    .mutation-summary { grid-template-columns: repeat(2,1fr); }
+    .mutation-stat:nth-child(2) { border-right: 0; }
+    .mutation-stat:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+    .mutation-stat { padding: 16px; }
+}
 /* =========================================
    11. TABLES
 ========================================= */
@@ -1055,6 +1202,7 @@ footer {
         <a href="#markets">Markets</a>
         <a href="#execution">Execution</a>
         <a href="#verification">Verification</a>
+        <a href="#mutation">Mutation testing</a>
     </nav>
 
     <div class="live-pill">
@@ -1364,7 +1512,64 @@ footer {
     </div>
 
 </section>
+<section id="mutation" class="mutation-section">
+    <div class="section-head">
+        <h2>03 / Adversarial mutation testing</h2>
+        <span>DELIBERATE BUG DETECTION</span>
+    </div>
 
+    <div class="mutation-intro">
+        <div>
+            <div class="panel-label">DOES THE VERIFIER CATCH BROKEN BEHAVIOUR?</div>
+            <p>
+                AEGIS tests deliberately corrupted engine states and checks whether
+                invariant and expected-behaviour checks detect the injected faults.
+            </p>
+        </div>
+        <button class="mutation-run" id="mutationButton" onclick="runMutationReport()">
+            RUN MUTATION SUITE →
+        </button>
+    </div>
+
+    <div class="mutation-summary">
+        <div class="mutation-stat">
+            <div class="mutation-stat-label">MUTATIONS TESTED</div>
+            <div class="mutation-stat-value" id="mutationTotal">—</div>
+        </div>
+        <div class="mutation-stat">
+            <div class="mutation-stat-label">DETECTED</div>
+            <div class="mutation-stat-value lime" id="mutationDetected">—</div>
+        </div>
+        <div class="mutation-stat">
+            <div class="mutation-stat-label">SURVIVED</div>
+            <div class="mutation-stat-value red" id="mutationSurvived">—</div>
+        </div>
+        <div class="mutation-stat">
+            <div class="mutation-stat-label">DETECTION SCORE</div>
+            <div class="mutation-stat-value blue" id="mutationScore">—</div>
+        </div>
+    </div>
+
+    <div class="panel" id="mutationStatus" style="margin-bottom:16px">
+        <p class="mutation-empty">Run the mutation suite to load the report.</p>
+    </div>
+
+    <div class="mutation-engine-grid" id="mutationEngines">
+        <div class="panel">
+            <div class="panel-label">PYTHON ENGINE</div>
+            <p class="mutation-empty">Awaiting report.</p>
+        </div>
+        <div class="panel">
+            <div class="panel-label">INDEPENDENT REFERENCE ENGINE</div>
+            <p class="mutation-empty">Awaiting report.</p>
+        </div>
+    </div>
+
+    <div class="mutation-disclaimer" id="mutationDisclaimer">
+        Report scope: Python and independent reference engines only.
+        C++ mutation testing is not included.
+    </div>
+</section>
 <!-- =========================================
      18. TRADE HISTORY
 ========================================= -->
@@ -2158,7 +2363,124 @@ async function runSimulation() {
 
 }
 
+function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[c]);
+}
 
+function renderMutationEngine(report) {
+    const results = Array.isArray(report.results) ? report.results : [];
+
+    const rows = results.map(result => {
+        const detected = result.detected === true;
+        const details = [
+            ...(result.detection_methods || []),
+            ...(result.violations || [])
+        ].filter(Boolean).join(" · ");
+
+        return `
+            <div class="mutation-row">
+                <div>
+                    <div class="mutation-name">${escapeHTML(result.name)}</div>
+                    <div class="mutation-methods">${escapeHTML(details)}</div>
+                </div>
+                <span class="mutation-status ${detected ? "" : "survived"}">
+                    ${detected ? "DETECTED" : "SURVIVED"}
+                </span>
+            </div>
+        `;
+    }).join("");
+
+    const score = Number(report.score);
+
+    return `
+        <div class="panel">
+            <div class="panel-label">MUTATION RESULTS</div>
+            <h3 class="mutation-engine-title">
+                <span>${escapeHTML(report.engine)}</span>
+                <span class="mutation-score">
+                    ${Number.isFinite(score) ? score.toFixed(1) + "%" : "—"}
+                </span>
+            </h3>
+            <div class="info-line">
+                <span>Tested</span><strong>${report.total ?? 0}</strong>
+            </div>
+            <div class="info-line">
+                <span>Detected</span><strong class="lime">${report.detected ?? 0}</strong>
+            </div>
+            <div class="info-line">
+                <span>Survived</span><strong class="red">${report.survived ?? 0}</strong>
+            </div>
+            ${rows}
+        </div>
+    `;
+}
+
+async function runMutationReport() {
+    const button = document.getElementById("mutationButton");
+    const status = document.getElementById("mutationStatus");
+    const engines = document.getElementById("mutationEngines");
+
+    button.disabled = true;
+    button.textContent = "RUNNING...";
+
+    status.textContent = "Running mutation tests...";
+
+    try {
+        const response = await fetch(`${API}/mutation/report`, {
+            cache: "no-store"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Mutation report failed");
+        }
+
+        setText("mutationTotal", data.total ?? 0);
+        setText("mutationDetected", data.detected ?? 0);
+        setText("mutationSurvived", data.survived ?? 0);
+
+        const score = Number(data.score);
+        setText(
+            "mutationScore",
+            Number.isFinite(score) ? score.toFixed(1) + "%" : "—"
+        );
+
+        const reports = Array.isArray(data.reports) ? data.reports : [];
+
+        engines.innerHTML = reports.length
+            ? reports.map(renderMutationEngine).join("")
+            : '<div class="panel">No engine reports returned.</div>';
+
+        status.innerHTML = `
+            <div class="panel-label">MUTATION RUN STATUS</div>
+            <p class="lime">
+                ${escapeHTML(data.status || "REPORT RETURNED")}
+            </p>
+            <p class="mutation-empty">
+                ${data.detected ?? 0} of ${data.total ?? 0} mutations detected.
+            </p>
+        `;
+
+        setText(
+            "mutationDisclaimer",
+            data.disclaimer ||
+            "Report covers Python and independent reference engines only. C++ mutation testing is not included."
+        );
+
+    } catch (error) {
+        status.textContent = "Mutation testing error: " + error.message;
+    } finally {
+        button.disabled = false;
+        button.textContent = "RUN MUTATION SUITE →";
+    }
+}
 /* -----------------------------------------
    INITIALIZATION
 ----------------------------------------- */
