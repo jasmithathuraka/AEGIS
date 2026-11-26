@@ -5,8 +5,6 @@ AEGIS is a miniature electronic exchange paired with an adversarial verification
 
 It combines two independent exchange implementations — Python and C++ — with automated testing, differential verification, invariant checking, mutation testing, and performance benchmarking.
 
-The central idea is simple:
-
 **An exchange should not just execute orders. It should be tested against the ways it can fail.**
 
 ---
@@ -92,6 +90,8 @@ Runs corresponding scenarios through the Python and C++ implementations and comp
 
 Reduces failing event sequences to smaller reproductions, making bugs easier to understand and debug.
 
+The current shrinker uses chunk-based event removal followed by reduction of positive integer `price` and `qty` values. It preserves a failure according to the supplied failure-checking callback; it does not guarantee a globally minimal sequence.
+
 ### 5. Mutation testing
 
 Introduces deliberate defects into exchange behaviour to evaluate whether the testing framework detects them.
@@ -122,6 +122,7 @@ The following results were observed during local testing:
 | Python test suite, including integration tests | 105 passed |
 | C++ integration, adversarial and differential tests | 31 passed |
 | C++ mutation tests | 5/5 detected |
+| Shrinker tests | 8 passed |
 
 The GitHub Actions CI workflow also completed successfully.
 
@@ -169,26 +170,47 @@ AEGIS/
 │   └── cpp_mutation.py
 ├── bugs/
 │   ├── README.md
-│   └── mutation-cases.md
+│   ├── mutation-cases.md
+│   └── shrinker-demo.md
 ├── cpp/
 │   ├── include/
+│   │   └── exchange.hpp
 │   ├── src/
+│   │   ├── exchange.cpp
+│   │   ├── main.cpp
+│   │   └── benchmark.cpp
 │   └── tests/
+│       └── test_exchange.cpp
 ├── docs/
 │   └── exchange_rules.md
 ├── src/
 │   └── aegis/
-│       ├── exchange.py
-│       ├── differential.py
-│       ├── generator.py
-│       ├── invariants.py
-│       ├── mutation.py
+│       ├── __init__.py
+│       ├── models.py
 │       ├── parser.py
-│       ├── pipeline.py
+│       ├── exchange.py
+│       ├── invariants.py
+│       ├── generator.py
+│       ├── shrinker.py
 │       ├── runner.py
-│       └── shrinker.py
+│       ├── mutation.py
+│       ├── pipeline.py
+│       └── differential.py
 ├── tests/
+│   ├── test_models.py
+│   ├── test_parser.py
+│   ├── test_exchange.py
+│   ├── test_invariants.py
+│   ├── test_generator.py
+│   ├── test_shrinker.py
+│   ├── test_runner.py
+│   ├── test_mutation.py
+│   ├── test_pipeline.py
+│   ├── test_cpp_jsonl.py
+│   ├── test_cpp_adversarial.py
+│   └── test_adversarial_differential.py
 ├── Makefile
+├── .gitignore
 └── README.md
 ```
 
