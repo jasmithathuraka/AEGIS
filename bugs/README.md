@@ -1,20 +1,35 @@
+# AEGIS Bug Documentation
 
-# AEGIS — Bug Journal
+This directory documents AEGIS testing evidence, controlled fault injections, and failure reduction.
 
-This directory documents real defects discovered during testing.
+## Documentation
 
-Each bug report should include:
+- [Mutation Cases](mutation-cases.md) — controlled faults introduced into the C++ exchange and how the test suite detects them.
+- [Shrinker Demonstration](shrinker-demo.md) — how AEGIS reduces a failing event sequence while preserving the failure.
 
-1. **Bug ID and title**
-2. **Component affected**
-3. **Seed and event sequence**
-4. **Original failing input**
-5. **Shrunk minimal reproduction**
-6. **Expected behaviour**
-7. **Actual behaviour**
-8. **Root cause**
-9. **Fix**
-10. **Regression test**
+## Reporting a Newly Discovered Bug
 
-Only confirmed bugs belong here. Planted mutants are documented separately from naturally discovered defects.
+Only add a bug report when an actual defect has been reproduced. Keep deliberately introduced mutation cases separate from naturally discovered bugs.
 
+Use this template:
+
+### Bug ID: [Short title]
+
+- **Component:**
+- **Seed:**
+- **Original event sequence:**
+- **Reduced event sequence:**
+- **Expected behaviour:**
+- **Actual behaviour:**
+- **Root cause:**
+- **Fix:**
+- **Regression test:**
+
+Include enough information for someone else to reproduce the issue.
+
+## Evidence Principles
+
+- Distinguish real defects from deliberately introduced mutations.
+- Preserve the exact input needed to reproduce a failure.
+- Do not claim a bug was fixed without a regression test.
+- Document limitations and surviving mutations honestly.
