@@ -1,19 +1,69 @@
 # AEGIS
 ### The Exchange That Hunts Its Own Bugs
 
-AEGIS is a miniature electronic exchange paired with an adversarial verification framework designed to expose, reproduce, and detect correctness bugs in exchange systems.
+**A deterministic electronic exchange and adversarial verification framework.**
 
-It combines two independent exchange implementations — Python and C++ — with automated testing, differential verification, invariant checking, mutation testing, and performance benchmarking.
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=cplusplus)](https://isocpp.org/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Testing](https://img.shields.io/badge/Testing-Differential%20%7C%20Adversarial-8A6D45)](#verification-framework)
+[![Deployment](https://img.shields.io/badge/Demo-Live-success)](https://aegis-lom5.onrender.com)
 
-**An exchange should not just execute orders. It should be tested against the ways it can fail.**
+**[Live Demo](https://aegis-lom5.onrender.com) · [GitHub Repository](https://github.com/jasmithathuraka/AEGIS)**
 
 ---
 
 ## Overview
 
-AEGIS explores the engineering challenges behind a simplified electronic limit order book.
+AEGIS is a miniature electronic exchange paired with an adversarial verification framework designed to expose, reproduce, and detect correctness bugs in exchange systems.
 
-The exchange supports:
+It combines independently implemented Python and C++ matching engines with deterministic event generation, invariant checking, differential testing, failure shrinking, mutation testing, and performance benchmarking.
+
+The central idea is simple:
+
+> An exchange should not just execute orders. It should be tested against the ways it can fail.
+
+Rather than evaluating an implementation only through expected inputs, AEGIS deliberately exercises edge cases, compares independent implementations, and tests whether its verification framework can detect injected defects.
+
+## System Architecture
+
+AEGIS is organised around two cooperating components: the exchange engines and the verification framework.
+
+```text
+                         AEGIS
+                           |
+             +-------------+-------------+
+             |                           |
+       EXCHANGE ENGINES            VERIFICATION
+             |                           |
+       +-----+-----+          +----------+----------+
+       |           |          |          |          |
+     Python       C++     Invariant  Differential  Adversarial
+     Engine      Engine   Checking    Testing      Testing
+       |           |          |          |          |
+       +-----+-----+          +----------+----------+
+             |                           |
+       Order Matching              Failure Shrinking
+                                        |
+                                  Mutation Testing
+                                        |
+                                  Test Reports
+```
+
+### Exchange engines
+
+**Python engine**
+
+An independent implementation of the exchange rules, used for execution and comparison during verification.
+
+**C++ engine**
+
+A C++20 implementation using an indexed order book and FIFO price-level queues, with rollback handling for tested internal failures.
+
+Both engines implement the same documented exchange rules while maintaining separate implementations.
+
+## Exchange Functionality
+
+AEGIS supports:
 
 - Limit and market orders
 - Order cancellation
@@ -22,83 +72,50 @@ The exchange supports:
 - Self-trade prevention
 - Order and trade state tracking
 
-The project goes beyond implementing exchange functionality. It includes a separate testing framework that generates event sequences, checks exchange invariants, compares implementations, and evaluates whether tests can detect deliberately introduced bugs.
+The exchange models the core behaviour of a simplified electronic limit order book.
 
-## Architecture
+## Verification Framework
 
-```text
-                         AEGIS
-                           |
-             +-------------+-------------+
-             |                           |
-       Exchange Engines            Verification Layer
-             |                           |
-       +-----+-----+             +-------+--------+
-       |           |             |       |        |
-     Python       C++         Invariant Differential
-     Engine      Engine        Checking   Testing
-       |           |                 |
-       +-----+-----+                 |
-             |                       |
-       Event Processing        Adversarial Testing
-                                     |
-                            +--------+--------+
-                            |                 |
-                         Shrinker        Mutation Testing
-                            |                 |
-                            +--------+--------+
-                                     |
-                                Test Reports
-```
+The verification layer is the central feature of AEGIS. It evaluates not only whether the exchange works under normal conditions, but whether its behaviour remains correct under deliberately challenging event sequences.
 
-### Exchange implementations
+### 1. Invariant Checking
 
-**Python engine**
-
-Provides an implementation of the exchange logic and serves as one side of differential testing.
-
-**C++ engine**
-
-Provides an independently implemented exchange engine with an indexed order book and rollback handling for tested internal failures.
-
-Both implementations follow the same documented exchange rules.
-
----
-
-## Verification and Testing
-
-### 1. Invariant checking
-
-The verification layer checks properties of the exchange state, including:
+Checks exchange-state properties, including:
 
 - Quantity conservation
 - Valid order quantities and statuses
 - Valid order sides and prices
-- No crossed resting order book
+- Absence of crossed resting orders
 - Trade consistency
-- Executed quantity consistency between orders and trades
+- Consistency between executed order quantities and trade history
 
-### 2. Adversarial testing
+### 2. Deterministic Adversarial Testing
 
-Generates event sequences designed to exercise exchange behaviour and expose edge cases.
+Generates reproducible event sequences to exercise exchange behaviour and expose edge cases.
 
-### 3. Differential testing
+Using deterministic seeds makes failing scenarios repeatable and easier to debug.
 
-Runs corresponding scenarios through the Python and C++ implementations and compares their resulting exchange states.
+### 3. Differential Testing
 
-### 4. Failure shrinking
+Runs corresponding event sequences through the independent Python and C++ implementations and compares their resulting exchange states.
 
-Reduces failing event sequences to smaller reproductions, making bugs easier to understand and debug.
+This helps identify behavioural disagreements that may not be caught by testing either implementation in isolation.
 
-The current shrinker uses chunk-based event removal followed by reduction of positive integer `price` and `qty` values. It preserves a failure according to the supplied failure-checking callback; it does not guarantee a globally minimal sequence.
+### 4. Failure Shrinking
 
-### 5. Mutation testing
+Reduces failing event sequences into smaller reproductions.
+
+The current shrinker uses chunk-based event removal followed by reduction of positive integer `price` and `qty` values.
+
+It preserves a failure according to the supplied failure-checking callback; it does not guarantee a globally minimal sequence.
+
+### 5. Mutation Testing
 
 Introduces deliberate defects into exchange behaviour to evaluate whether the testing framework detects them.
 
-The C++ mutation suite currently detects all five implemented mutants.
+The current C++ mutation suite detects all five implemented mutants:
 
-| Mutation | Detection |
+| Injected defect | Result |
 |---|---|
 | Reversed FIFO priority | Detected |
 | Incorrect execution price | Detected |
@@ -106,41 +123,45 @@ The C++ mutation suite currently detects all five implemented mutants.
 | Cancellation leaves stale book entry | Detected |
 | Self-trade prevention disabled | Detected |
 
-**C++ mutation result: 5/5 detected (100%).**
+**Current result: 5/5 implemented mutants detected (100%).**
 
-This score applies to the five implemented mutants, not every possible exchange defect.
+This result applies only to the five implemented mutants, not every possible exchange defect.
 
----
+## Testing
 
-## Testing Results
+AEGIS includes unit, integration, adversarial, differential, randomized, and boundary-condition tests.
 
-The following results were observed during local testing:
+The latest full-suite result reported during development was:
 
-| Test suite | Result |
-|---|---:|
-| C++ engine tests | 9 passed |
-| Python test suite, including integration tests | 105 passed |
-| C++ integration, adversarial and differential tests | 31 passed |
-| C++ mutation tests | 5/5 detected |
-| Shrinker tests | 8 passed |
+**148 tests passed.**
 
-The GitHub Actions CI workflow also completed successfully.
+Additional verification work includes:
 
----
+- C++ engine and integration tests
+- Independent reference-engine tests
+- Randomized differential testing
+- Randomized invariant checking
+- Adversarial event-sequence testing
+- Mutation testing
+- Failure-shrinker tests
+
+The randomized differential testing campaign compared implementations across 10 seeds and 500 generated events per seed.
+
+The GitHub Actions workflow runs the project's automated test workflow on pushes and pull requests.
 
 ## Performance Benchmarking
 
-AEGIS includes a benchmark comparing the Python and C++ exchange implementations over deterministic generated event workloads.
+AEGIS includes a deterministic benchmark comparing the Python and C++ exchange implementations.
 
 ### Methodology
 
-- Deterministic workloads generated using seed 42.
-- Two warm-up runs per implementation.
-- Seven measured repetitions per workload.
-- Median execution time reported.
-- Execution order alternates between Python and C++.
-- Event generation and JSON input parsing are excluded from timing.
-- Complete final order state and trade history are compared.
+- Deterministic generated workloads using seed `42`
+- Two warm-up runs per implementation
+- Seven measured repetitions per workload
+- Median execution time reported
+- Alternating execution order between Python and C++
+- Event generation and JSON input parsing excluded from timing
+- Final order state and trade history compared for correctness
 
 ### Observed Results
 
@@ -152,11 +173,23 @@ AEGIS includes a benchmark comparing the Python and C++ exchange implementations
 
 All three workloads completed with matching final exchange states.
 
-**Limitations:** These measurements compare the current Python and C++ implementations, not universally equivalent workloads. Python constructs event-result objects and dictionary-based order updates, while the C++ benchmark constructs full order-update objects. The benchmark compares complete final states rather than every intermediate event result.
+**Benchmark limitations:** These measurements compare the current implementations, not universally equivalent workloads. Python constructs event-result objects and dictionary-based order updates, while the C++ benchmark constructs full order-update objects. The benchmark compares complete final states rather than every intermediate event result.
 
-The observed ratios should therefore be treated as implementation-specific measurements, not universal performance claims.
+The observed ratios are implementation-specific measurements, not universal performance claims.
 
----
+## Technology Stack
+
+| Component | Technology |
+|---|---|
+| Exchange engine | C++20 |
+| Independent implementation | Python 3.12 |
+| API backend | FastAPI |
+| Frontend | HTML, CSS, JavaScript |
+| Testing | pytest, C++ tests |
+| Benchmarking | Python and C++ |
+| Build | GNU Make, g++ |
+| Deployment | Docker, Render |
+| CI | GitHub Actions |
 
 ## Project Structure
 
@@ -164,30 +197,19 @@ The observed ratios should therefore be treated as implementation-specific measu
 AEGIS/
 ├── .github/
 │   └── workflows/
-│       └── tests.yml
+├── backend/
 ├── benchmarks/
 │   ├── benchmark.py
 │   └── cpp_mutation.py
 ├── bugs/
-│   ├── README.md
-│   ├── mutation-cases.md
-│   └── shrinker-demo.md
 ├── cpp/
 │   ├── include/
-│   │   └── exchange.hpp
 │   ├── src/
-│   │   ├── exchange.cpp
-│   │   ├── main.cpp
-│   │   └── benchmark.cpp
 │   └── tests/
-│       └── test_exchange.cpp
 ├── docs/
-│   └── exchange_rules.md
+├── frontend/
 ├── src/
 │   └── aegis/
-│       ├── __init__.py
-│       ├── models.py
-│       ├── parser.py
 │       ├── exchange.py
 │       ├── invariants.py
 │       ├── generator.py
@@ -195,56 +217,42 @@ AEGIS/
 │       ├── runner.py
 │       ├── mutation.py
 │       ├── pipeline.py
-│       └── differential.py
+│       ├── differential.py
+│       └── reference.py
 ├── tests/
-│   ├── test_models.py
-│   ├── test_parser.py
-│   ├── test_exchange.py
-│   ├── test_invariants.py
-│   ├── test_generator.py
-│   ├── test_shrinker.py
-│   ├── test_runner.py
-│   ├── test_mutation.py
-│   ├── test_pipeline.py
-│   ├── test_cpp_jsonl.py
-│   ├── test_cpp_adversarial.py
-│   └── test_adversarial_differential.py
+├── Dockerfile
 ├── Makefile
-├── .gitignore
+├── requirements.txt
 └── README.md
 ```
-
----
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.12
-- pytest
 - A C++20-compatible compiler
-- nlohmann/json headers for the C++ JSONL integration tests
 - GNU Make
+- `nlohmann/json` headers for C++ JSONL integration tests
 
-### Setup
-
-Clone the repository:
+### Clone the repository
 
 ```bash
 git clone https://github.com/jasmithathuraka/AEGIS.git
 cd AEGIS
 ```
 
-Create and activate a virtual environment:
+### Create a virtual environment
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-Install the Python test dependency:
+### Install dependencies
 
 ```bash
+python -m pip install -r requirements.txt
 python -m pip install pytest
 ```
 
@@ -254,15 +262,13 @@ On macOS with Homebrew, install the JSON library if needed:
 brew install nlohmann-json
 ```
 
-### Run tests
-
-Run the complete project test target:
+### Run the test suite
 
 ```bash
 make test
 ```
 
-Run the Python suite independently:
+Alternatively, run the Python suite independently:
 
 ```bash
 PYTHONPATH=src pytest -v
@@ -280,33 +286,27 @@ PYTHONPATH=src python benchmarks/cpp_mutation.py
 PYTHONPATH=src python benchmarks/benchmark.py
 ```
 
----
-
 ## Continuous Integration
 
-AEGIS uses GitHub Actions to automatically execute its test workflow on pushes and pull requests.
+AEGIS uses GitHub Actions to execute its automated test workflow on pushes and pull requests.
 
-The CI workflow builds and tests the C++ engine, runs the Python and integration test suite, and executes the C++ mutation tests.
-
----
+The workflow builds and tests the C++ engine, runs the Python and integration test suite, and executes the C++ mutation tests.
 
 ## Design Principles
 
 - **Correctness before performance:** Validate exchange behaviour before optimising it.
-- **Reproducibility:** Make failures reproducible from event sequences.
-- **Independent implementations:** Use separate Python and C++ engines to enable differential verification.
+- **Reproducibility:** Make failures reproducible from deterministic event sequences.
+- **Independent implementations:** Use separate Python and C++ engines for differential verification.
 - **Adversarial thinking:** Test deliberate failure modes rather than only expected inputs.
-- **Evidence over claims:** Report measured results with their limitations.
-
----
+- **Evidence over claims:** Report measured results alongside their limitations.
 
 ## Future Improvements
 
-- More comprehensive mutation operators and branch coverage.
-- Stronger intermediate-event differential comparisons.
-- More representative, workload-equivalent performance benchmarks.
-- Additional documented minimal bug reproductions.
-- Further optimisation of exchange operations.
+- Broader mutation operators and branch coverage
+- Stronger intermediate-event differential comparisons
+- More representative, workload-equivalent benchmarks
+- Additional documented minimal bug reproductions
+- Further optimisation of exchange operations
 
 ---
 
