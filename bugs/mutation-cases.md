@@ -4,7 +4,7 @@ This document records deliberate faults introduced into the C++ exchange engine 
 
 These are controlled fault-injection experiments, not reports of naturally discovered production bugs.
 
-## Test methodology
+## Test Methodology
 
 For each mutation:
 
