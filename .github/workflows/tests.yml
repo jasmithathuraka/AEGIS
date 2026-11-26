@@ -1,0 +1,45 @@
+
+name: AEGIS CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install C++ dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ clang nlohmann-json3-dev
+
+      - name: Install Python test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+
+      - name: Build and run C++ engine tests
+        run: |
+          g++ -std=c++20 -Wall -Wextra -Wpedantic -O2 \
+            -Icpp/include \
+            cpp/src/exchange.cpp cpp/tests/test_exchange.cpp \
+            -o cpp_exchange_tests
+          ./cpp_exchange_tests
+
+      - name: Run Python and integration tests
+        run: |
+          PYTHONPATH=src pytest -v
+
+      - name: Run C++ mutation tests
+        run: |
+          PYTHONPATH=src python benchmarks/cpp_mutation.py

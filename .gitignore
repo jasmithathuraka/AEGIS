@@ -1,0 +1,25 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Compiled C++ executables
+aegis_cpp
+aegis_cpp_benchmark
+aegis_cpp_jsonl
+cpp_exchange_tests
+
+# Build files
+*.o
+*.out
+build/
