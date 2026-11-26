@@ -1,0 +1,2181 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#05060a">
+
+    <title>AEGIS — Exchange Intelligence</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================
+   01. DESIGN SYSTEM
+========================================= */
+
+:root {
+    --background: #05060a;
+    --background-secondary: #080b12;
+
+    --surface: #0b101a;
+    --surface-secondary: #0e1521;
+
+    --border: rgba(174, 195, 230, 0.13);
+
+    --text-primary: #f2f5ff;
+    --text-secondary: #8995aa;
+    --text-muted: #5d6a80;
+
+    --mint: #65f2c2;
+    --cyan: #5de3f2;
+    --violet: #a78bfa;
+    --blue: #729cff;
+    --gold: #f4c879;
+    --rose: #ff829e;
+
+    --font-mono: "DM Mono", monospace;
+    --font-sans: "DM Sans", sans-serif;
+    --font-display: "Manrope", sans-serif;
+    --font-serif: "Playfair Display", serif;
+}
+
+/* =========================================
+   02. GLOBAL STYLES
+========================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 88px;
+}
+
+body {
+    margin: 0;
+    background: var(--background);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+
+    background:
+        radial-gradient(
+            ellipse at 9% 17%,
+            rgba(112, 76, 220, 0.16),
+            transparent 31%
+        ),
+        radial-gradient(
+            ellipse at 88% 22%,
+            rgba(34, 174, 190, 0.11),
+            transparent 30%
+        ),
+        radial-gradient(
+            ellipse at 52% 92%,
+            rgba(56, 105, 190, 0.10),
+            transparent 38%
+        ),
+        linear-gradient(
+            135deg,
+            #05060a 0%,
+            #070a12 55%,
+            #05070b 100%
+        );
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.mono {
+    font-family: var(--font-mono);
+}
+
+/* =========================================
+   03. NAVIGATION
+========================================= */
+
+header {
+    height: 76px;
+    padding: 0 6.3%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom: 1px solid var(--border);
+
+    background: rgba(5, 6, 10, 0.78);
+    backdrop-filter: blur(24px);
+
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+.logo {
+    font-family: var(--font-display);
+    font-size: 23px;
+    font-weight: 800;
+    letter-spacing: 7px;
+}
+
+.logo span {
+    color: var(--mint);
+    text-shadow: 0 0 18px rgba(101, 242, 194, 0.6);
+}
+
+.logo small {
+    display: block;
+    margin-top: 2px;
+
+    color: #77849b;
+
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 2.8px;
+}
+
+nav {
+    display: flex;
+    gap: 35px;
+}
+
+nav a {
+    color: #9aa7bb;
+
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 1px;
+
+    transition: 0.2s;
+}
+
+nav a:hover {
+    color: var(--mint);
+    text-shadow: 0 0 14px rgba(101, 242, 194, 0.55);
+}
+
+.live-pill {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    border: 1px solid rgba(101, 242, 194, 0.28);
+    border-radius: 30px;
+
+    padding: 10px 15px;
+
+    color: var(--mint);
+    background: rgba(101, 242, 194, 0.055);
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1.4px;
+}
+
+.live-dot {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+    background: var(--mint);
+
+    box-shadow:
+        0 0 9px var(--mint),
+        0 0 22px rgba(101, 242, 194, 0.65);
+
+    animation: pulse 1.8s infinite;
+}
+
+@keyframes pulse {
+    50% {
+        opacity: 0.42;
+        box-shadow: 0 0 3px var(--mint);
+    }
+}
+
+/* =========================================
+   04. MAIN LAYOUT
+========================================= */
+
+main {
+    max-width: 1600px;
+    margin: auto;
+    padding: 0 6.3% 110px;
+}
+
+/* =========================================
+   05. HERO SECTION
+========================================= */
+
+.hero {
+    min-height: 560px;
+    padding: 100px 0 76px;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.hero-copy {
+    position: relative;
+    z-index: 2;
+    max-width: 790px;
+}
+
+.eyebrow {
+    color: var(--mint);
+
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 3.2px;
+
+    text-transform: uppercase;
+}
+
+.hero h1 {
+    max-width: 850px;
+    margin: 29px 0 24px;
+
+    font-family: var(--font-serif);
+    font-size: clamp(64px, 8.4vw, 116px);
+    font-weight: 600;
+
+    line-height: 0.98;
+    letter-spacing: -3.5px;
+}
+
+.hero h1 em {
+    font-weight: 500;
+
+    color: transparent;
+
+    background: linear-gradient(
+        105deg,
+        #8fffe0 4%,
+        #61d9ef 44%,
+        #a78bfa 94%
+    );
+
+    background-clip: text;
+    -webkit-background-clip: text;
+}
+
+.hero-copy p {
+    max-width: 520px;
+
+    color: #a4b0c4;
+
+    font-size: 14px;
+    line-height: 1.95;
+}
+
+/* Hero visual */
+
+.hero-art {
+    position: absolute;
+    right: 3%;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    width: 420px;
+    height: 420px;
+
+    display: grid;
+    place-items: center;
+
+    pointer-events: none;
+}
+
+.orb {
+    width: 220px;
+    height: 220px;
+
+    border-radius: 50%;
+    border: 1px solid rgba(93, 227, 242, 0.25);
+
+    display: grid;
+    place-items: center;
+
+    position: relative;
+
+    box-shadow:
+        0 0 100px rgba(93, 227, 242, 0.07),
+        inset 0 0 65px rgba(93, 227, 242, 0.06);
+
+    animation: float 9s ease-in-out infinite;
+}
+
+.orb::before,
+.orb::after {
+    content: "";
+
+    position: absolute;
+
+    border: 1px solid rgba(167, 139, 250, 0.27);
+    border-radius: 50%;
+}
+
+.orb::before {
+    inset: -45px;
+    border-left-color: transparent;
+    transform: rotate(-28deg);
+}
+
+.orb::after {
+    inset: -82px;
+
+    border-right-color: transparent;
+    border-bottom-color: rgba(101, 242, 194, 0.24);
+
+    transform: rotate(32deg);
+}
+
+.orb-core {
+    width: 104px;
+    height: 104px;
+
+    border-radius: 50%;
+
+    background: radial-gradient(
+        circle at 34% 25%,
+        #e7fffd 0%,
+        #76f7df 12%,
+        #36b7cf 37%,
+        #5542a2 72%,
+        #10101e 100%
+    );
+
+    box-shadow:
+        0 0 35px rgba(93, 227, 242, 0.48),
+        0 0 100px rgba(119, 105, 245, 0.24),
+        0 0 150px rgba(101, 242, 194, 0.12);
+}
+
+@keyframes float {
+    50% {
+        transform: translateY(-13px);
+    }
+}
+
+.hero-meta {
+    position: absolute;
+    right: 0;
+    bottom: 55px;
+
+    color: #75839a;
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+    line-height: 2.1;
+    letter-spacing: 1.2px;
+
+    text-align: right;
+}
+
+.hero-index {
+    position: absolute;
+    left: 0;
+    bottom: 25px;
+
+    color: #78859a;
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1.7px;
+}
+
+/* =========================================
+   06. METRICS
+========================================= */
+
+.metrics {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 1fr;
+
+    border: 1px solid var(--border);
+
+    margin: 32px 0 78px;
+
+    background: rgba(10, 15, 25, 0.65);
+
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.18);
+}
+
+.metric {
+    padding: 25px 26px;
+    min-height: 145px;
+
+    border-right: 1px solid var(--border);
+
+    position: relative;
+    overflow: hidden;
+}
+
+.metric:last-child {
+    border-right: 0;
+}
+
+.metric::after {
+    content: "";
+
+    position: absolute;
+
+    width: 135px;
+    height: 100px;
+
+    right: -55px;
+    bottom: -58px;
+
+    border-radius: 50%;
+    filter: blur(42px);
+    opacity: 0.32;
+}
+
+.metric:nth-child(1)::after {
+    background: var(--cyan);
+}
+
+.metric:nth-child(2)::after {
+    background: var(--violet);
+}
+
+.metric:nth-child(3)::after {
+    background: var(--mint);
+}
+
+.metric:nth-child(4)::after {
+    background: var(--gold);
+}
+
+.metric-label {
+    color: #8d9ab0;
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1.4px;
+}
+
+.metric-value {
+    position: relative;
+    z-index: 1;
+
+    margin: 19px 0 7px;
+
+    font-family: var(--font-display);
+    font-size: 31px;
+    font-weight: 700;
+
+    letter-spacing: -1.5px;
+}
+
+.metric-note {
+    color: #78869b;
+    font-size: 10px;
+}
+
+.lime { color: var(--mint); }
+.blue { color: var(--violet); }
+.cyan { color: var(--cyan); }
+.amber { color: var(--gold); }
+.red { color: var(--rose); }
+
+/* =========================================
+   07. SECTION HEADINGS
+========================================= */
+
+.section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin: 0 0 21px;
+}
+
+.section-head h2 {
+    margin: 0;
+
+    font-family: var(--font-serif);
+    font-size: 25px;
+    font-weight: 600;
+
+    letter-spacing: -0.35px;
+}
+
+.section-head span {
+    color: #78869b;
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+}
+
+/* =========================================
+   08. PANELS AND MARKET SECTION
+========================================= */
+
+.market-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 16px;
+}
+
+.panel {
+    background: linear-gradient(
+        145deg,
+        rgba(13, 20, 33, 0.94),
+        rgba(7, 11, 19, 0.97)
+    );
+
+    border: 1px solid var(--border);
+
+    padding: 30px;
+
+    position: relative;
+    overflow: hidden;
+
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.16);
+}
+
+.panel::before {
+    content: "";
+
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    width: 100%;
+    height: 1px;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(93, 227, 242, 0.48),
+        rgba(167, 139, 250, 0.35),
+        transparent
+    );
+}
+
+.panel::after {
+    content: "";
+
+    position: absolute;
+
+    width: 180px;
+    height: 130px;
+
+    right: -110px;
+    top: -100px;
+
+    border-radius: 50%;
+
+    background: rgba(93, 227, 242, 0.08);
+    filter: blur(45px);
+
+    pointer-events: none;
+}
+
+.panel-label {
+    color: #93a2b9;
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1.7px;
+}
+
+.market-price {
+    margin: 20px 0 4px;
+
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5vw, 65px);
+    font-weight: 700;
+
+    letter-spacing: -3px;
+
+    text-shadow: 0 0 28px rgba(93, 227, 242, 0.15);
+}
+
+.market-caption {
+    color: #8592a8;
+    font-size: 10px;
+}
+
+.chart {
+    height: 220px;
+    margin-top: 28px;
+    position: relative;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.chart-foot {
+    display: flex;
+    justify-content: space-between;
+
+    color: #77859a;
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+
+    margin-top: 14px;
+}
+
+/* =========================================
+   09. SIMULATION CONTROLS
+========================================= */
+
+.sim-title {
+    margin: 18px 0 10px;
+
+    font-family: var(--font-serif);
+    font-size: 32px;
+    font-weight: 600;
+
+    line-height: 1.2;
+}
+
+.sim-description {
+    max-width: 430px;
+
+    color: #9ba8bc;
+
+    font-size: 12px;
+    line-height: 1.85;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    margin: 25px 0 20px;
+}
+
+select {
+    background: #080d17;
+    color: var(--text-primary);
+
+    border: 1px solid rgba(153, 176, 218, 0.24);
+    border-radius: 5px;
+
+    padding: 13px;
+    outline: none;
+
+    font-family: var(--font-mono);
+    font-size: 10px;
+}
+
+.primary {
+    padding: 14px 22px;
+
+    border: 1px solid rgba(101, 242, 194, 0.6);
+    border-radius: 5px;
+
+    background: linear-gradient(
+        110deg,
+        #75f4c7,
+        #58d8e8 58%,
+        #8c9bff
+    );
+
+    color: #061018;
+
+    font-family: var(--font-display);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+
+    box-shadow: 0 0 22px rgba(93, 227, 242, 0.13);
+
+    transition: 0.25s;
+}
+
+.primary:hover {
+    box-shadow: 0 0 32px rgba(93, 227, 242, 0.34);
+    transform: translateY(-2px);
+}
+
+.primary:disabled {
+    opacity: 0.5;
+    cursor: wait;
+    transform: none;
+}
+
+.status-box {
+    min-height: 76px;
+    padding: 17px;
+
+    border: 1px solid rgba(153, 176, 218, 0.16);
+    border-radius: 5px;
+
+    background: rgba(3, 7, 14, 0.65);
+
+    color: #a8b5c9;
+
+    font-size: 11px;
+    line-height: 1.8;
+}
+
+.sim-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+
+    margin-top: 18px;
+
+    color: #77859a;
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+}
+
+.sim-meta strong {
+    color: var(--violet);
+    font-weight: 500;
+}
+
+/* =========================================
+   10. VERIFICATION
+========================================= */
+
+#verification {
+    margin-top: 78px;
+}
+
+.verification-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 16px;
+}
+
+.engine {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 20px 0;
+
+    border-bottom: 1px solid var(--border);
+
+    font-size: 12px;
+}
+
+.engine:last-of-type {
+    border-bottom: 0;
+}
+
+.engine-status {
+    color: var(--mint);
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+}
+
+.engine-status::before {
+    content: "";
+
+    display: inline-block;
+
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: var(--mint);
+    box-shadow: 0 0 10px var(--mint);
+
+    margin-right: 9px;
+}
+
+.engine-status.fail {
+    color: var(--rose);
+}
+
+.engine-status.fail::before {
+    background: var(--rose);
+    box-shadow: 0 0 8px var(--rose);
+}
+
+.info-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+
+    padding: 18px 0;
+
+    border-bottom: 1px solid var(--border);
+
+    font-size: 11px;
+}
+
+.info-line:last-child {
+    border: 0;
+}
+
+.info-line span {
+    color: #9aa8bd;
+}
+
+.info-line strong {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    text-align: right;
+}
+
+/* =========================================
+   11. TABLES
+========================================= */
+
+.table-panel {
+    padding: 0;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 11px;
+}
+
+th {
+    padding: 18px 19px;
+
+    color: #8e9cb2;
+
+    border-bottom: 1px solid var(--border);
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+
+    white-space: nowrap;
+}
+
+td {
+    padding: 17px 19px;
+
+    color: #d3dced;
+
+    border-bottom: 1px solid rgba(174, 195, 230, 0.07);
+
+    white-space: nowrap;
+}
+
+tbody tr:hover {
+    background: rgba(93, 227, 242, 0.035);
+}
+
+.empty {
+    padding: 32px;
+    text-align: center;
+    color: #7d8ba1;
+}
+
+.data-section {
+    margin-top: 68px;
+}
+
+/* =========================================
+   12. FOOTER
+========================================= */
+
+footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 28px 6.3%;
+
+    border-top: 1px solid var(--border);
+
+    color: #738198;
+
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+
+    background: rgba(4, 6, 11, 0.65);
+}
+
+/* =========================================
+   13. RESPONSIVE DESIGN
+========================================= */
+
+@media (max-width: 1000px) {
+    .hero-art {
+        right: -100px;
+        opacity: 0.5;
+    }
+
+    .market-grid,
+    .verification-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metrics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .metric:nth-child(2) {
+        border-right: 0;
+    }
+
+    .metric:nth-child(-n+2) {
+        border-bottom: 1px solid var(--border);
+    }
+}
+
+@media (max-width: 650px) {
+    header {
+        padding: 0 5%;
+        height: 68px;
+    }
+
+    nav {
+        display: none;
+    }
+
+    main {
+        padding: 0 5% 70px;
+    }
+
+    .hero {
+        min-height: 480px;
+        padding: 75px 0 65px;
+    }
+
+    .hero h1 {
+        font-size: 62px;
+        letter-spacing: -2px;
+    }
+
+    .hero-art {
+        right: -190px;
+        opacity: 0.23;
+    }
+
+    .hero-meta {
+        font-size: 8px;
+        bottom: 20px;
+    }
+
+    .metrics {
+        margin: 22px 0 55px;
+    }
+
+    .metric {
+        padding: 17px;
+        min-height: 120px;
+    }
+
+    .metric-value {
+        font-size: 25px;
+    }
+
+    .section-head h2 {
+        font-size: 21px;
+    }
+
+    .section-head span {
+        font-size: 8px;
+    }
+
+    .panel {
+        padding: 21px;
+    }
+
+    .market-price {
+        font-size: 42px;
+    }
+
+    .sim-title {
+        font-size: 27px;
+    }
+
+    footer {
+        flex-direction: column;
+        padding: 25px 5%;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<!-- =========================================
+     14. HEADER
+========================================= -->
+
+<header>
+    <a href="#" class="logo">
+        AE<span>G</span>IS
+        <small>EXCHANGE INTELLIGENCE</small>
+    </a>
+
+    <nav>
+        <a href="#overview">Overview</a>
+        <a href="#markets">Markets</a>
+        <a href="#execution">Execution</a>
+        <a href="#verification">Verification</a>
+    </nav>
+
+    <div class="live-pill">
+        <span class="live-dot"></span>
+        <span id="connection">CONNECTING</span>
+    </div>
+</header>
+
+<main>
+
+<!-- =========================================
+     15. HERO AND OVERVIEW
+========================================= -->
+
+<section id="overview">
+
+    <div class="hero">
+
+        <div class="hero-copy">
+
+            <div class="eyebrow">
+                MARKET SYSTEMS / ADVERSARIAL VERIFICATION
+            </div>
+
+            <h1>
+                The exchange<br>
+                that <em>hunts its<br>own bugs.</em>
+            </h1>
+
+            <p>
+                A deterministic matching engine.
+                Three independent implementations.
+                One standard of correctness.
+            </p>
+
+        </div>
+
+        <div class="hero-art">
+            <div class="orb">
+                <div class="orb-core"></div>
+            </div>
+        </div>
+
+        <div class="hero-meta">
+            AEGIS SYSTEM / VERSION 1.0<br>
+            LIVE MARKET REFERENCE<br>
+            SIMULATED EXECUTION
+        </div>
+
+        <div class="hero-index">
+            01 — SYSTEM OVERVIEW
+        </div>
+
+    </div>
+
+    <!-- Dashboard metrics -->
+
+    <div class="metrics">
+
+        <div class="metric">
+            <div class="metric-label">
+                BTC / USD · LIVE REFERENCE
+            </div>
+
+            <div class="metric-value cyan" id="topPrice">
+                —
+            </div>
+
+            <div class="metric-note" id="priceSource">
+                Waiting for market data
+            </div>
+        </div>
+
+        <div class="metric">
+            <div class="metric-label">
+                EVENTS PROCESSED
+            </div>
+
+            <div class="metric-value blue" id="eventMetric">
+                —
+            </div>
+
+            <div class="metric-note">
+                Latest simulation run
+            </div>
+        </div>
+
+        <div class="metric">
+            <div class="metric-label">
+                ENGINE AGREEMENT
+            </div>
+
+            <div class="metric-value lime" id="agreementMetric">
+                —
+            </div>
+
+            <div class="metric-note">
+                Python · Reference · C++
+            </div>
+        </div>
+
+        <div class="metric">
+            <div class="metric-label">
+                INVARIANT CHECK
+            </div>
+
+            <div class="metric-value amber" id="invariantMetric">
+                —
+            </div>
+
+            <div class="metric-note" id="invariantNote">
+                Awaiting verification
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =========================================
+     16. MARKET INTELLIGENCE
+========================================= -->
+
+<section id="markets">
+
+    <div class="section-head">
+        <h2>01 / Market intelligence</h2>
+        <span>LIVE PRICE REFERENCE</span>
+    </div>
+
+    <div class="market-grid">
+
+        <!-- Market price chart -->
+
+        <div class="panel">
+
+            <div class="panel-label">
+                BITCOIN · BTC/USD
+            </div>
+
+            <div class="market-price cyan" id="marketPrice">
+                $—
+            </div>
+
+            <div class="market-caption" id="marketSource">
+                Coinbase · Live reference
+            </div>
+
+            <div class="chart">
+                <canvas id="priceChart"></canvas>
+            </div>
+
+            <div class="chart-foot">
+                <span>PRICE SNAPSHOTS</span>
+                <span id="lastUpdated">WAITING</span>
+            </div>
+
+        </div>
+
+        <!-- Simulation controls -->
+
+        <div class="panel" id="execution">
+
+            <div class="panel-label">
+                SIMULATION CONTROL
+            </div>
+
+            <div class="sim-title">
+                Put the exchange to the test.
+            </div>
+
+            <div class="sim-description">
+                Generate deterministic order flow and verify
+                all three engines against identical events.
+            </div>
+
+            <div class="controls">
+
+                <select id="eventCount">
+                    <option value="100">100 EVENTS</option>
+                    <option value="250">250 EVENTS</option>
+                    <option value="500">500 EVENTS</option>
+                    <option value="1000">1,000 EVENTS</option>
+                </select>
+
+                <button
+                    class="primary"
+                    id="runButton"
+                    onclick="runSimulation()"
+                >
+                    RUN AEGIS →
+                </button>
+
+            </div>
+
+            <div class="status-box" id="runStatus">
+                System ready. All orders and trades generated
+                here are simulated.
+            </div>
+
+            <div class="sim-meta">
+                <span>
+                    RANDOM SEED
+                    <strong>42 · DETERMINISTIC</strong>
+                </span>
+
+                <span>
+                    EXECUTION
+                    <strong>SIMULATED</strong>
+                </span>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =========================================
+     17. VERIFICATION INFRASTRUCTURE
+========================================= -->
+
+<section id="verification">
+
+    <div class="section-head">
+        <h2>02 / Verification infrastructure</h2>
+        <span>INDEPENDENT ENGINE COMPARISON</span>
+    </div>
+
+    <div class="verification-grid">
+
+        <div class="panel">
+
+            <div class="panel-label">
+                VERIFICATION ENGINES
+            </div>
+
+            <div class="engine">
+                <span>Python exchange</span>
+                <span class="engine-status" id="pythonStatus">
+                    READY
+                </span>
+            </div>
+
+            <div class="engine">
+                <span>Independent reference matcher</span>
+                <span class="engine-status" id="referenceStatus">
+                    READY
+                </span>
+            </div>
+
+            <div class="engine">
+                <span>C++ exchange</span>
+                <span class="engine-status" id="cppStatus">
+                    READY
+                </span>
+            </div>
+
+            <div
+                class="status-box"
+                id="verificationStatus"
+                style="margin-top:22px"
+            >
+                Run a simulation to compare all three engines
+                against the same event sequence.
+            </div>
+
+        </div>
+
+        <div class="panel">
+
+            <div class="panel-label">
+                SYSTEM INTEGRITY
+            </div>
+
+            <div class="info-line">
+                <span>Engine agreement</span>
+                <strong class="lime" id="integrityAgreement">
+                    PENDING
+                </strong>
+            </div>
+
+            <div class="info-line">
+                <span>Invariant validation</span>
+                <strong class="amber" id="integrityInvariant">
+                    PENDING
+                </strong>
+            </div>
+
+            <div class="info-line">
+                <span>Event count</span>
+                <strong id="integrityEvents">—</strong>
+            </div>
+
+            <div class="info-line">
+                <span>First mismatch</span>
+                <strong id="integrityMismatch">NONE</strong>
+            </div>
+
+            <div class="info-line">
+                <span>Execution model</span>
+                <strong class="cyan">DETERMINISTIC</strong>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =========================================
+     18. TRADE HISTORY
+========================================= -->
+
+<section class="data-section">
+
+    <div class="section-head">
+        <h2>03 / Recent simulated trades</h2>
+        <span>GENERATED BY AEGIS</span>
+    </div>
+
+    <div class="panel table-panel">
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>TRADE</th>
+                        <th>BUY ORDER</th>
+                        <th>SELL ORDER</th>
+                        <th>QUANTITY</th>
+                        <th>PRICE</th>
+                        <th>EVENT</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tradeTable">
+                    <tr>
+                        <td colspan="6" class="empty">
+                            No simulation executed yet.
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =========================================
+     19. ORDER ACTIVITY
+========================================= -->
+
+<section class="data-section">
+
+    <div class="section-head">
+        <h2>04 / Order activity</h2>
+        <span>SIMULATED ORDER UPDATES</span>
+    </div>
+
+    <div class="panel table-panel">
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>ORDER ID</th>
+                        <th>STATUS</th>
+                        <th>EXECUTED</th>
+                        <th>REMAINING</th>
+                        <th>CANCELLED</th>
+                    </tr>
+                </thead>
+
+                <tbody id="orderTable">
+                    <tr>
+                        <td colspan="5" class="empty">
+                            Waiting for simulation.
+                        </td>
+                    </tr>
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</section>
+
+<!-- =========================================
+     20. SYSTEM INFORMATION
+========================================= -->
+
+<section class="data-section">
+
+    <div class="section-head">
+        <h2>05 / System information</h2>
+        <span>AEGIS ENVIRONMENT</span>
+    </div>
+
+    <div class="panel">
+
+        <div class="info-line">
+            <span>Market data provider</span>
+            <strong class="lime" id="provider">
+                COINBASE
+            </strong>
+        </div>
+
+        <div class="info-line">
+            <span>Market data status</span>
+            <strong class="lime" id="marketStatus">
+                CONNECTING
+            </strong>
+        </div>
+
+        <div class="info-line">
+            <span>Matching architecture</span>
+            <strong>
+                DETERMINISTIC / SINGLE-THREADED
+            </strong>
+        </div>
+
+        <div class="info-line">
+            <span>Execution environment</span>
+            <strong class="blue">
+                SIMULATION ONLY
+            </strong>
+        </div>
+
+        <div class="info-line">
+            <span>Verification architecture</span>
+            <strong>
+                PYTHON + REFERENCE + C++
+            </strong>
+        </div>
+
+    </div>
+
+</section>
+
+</main>
+
+<!-- =========================================
+     21. FOOTER
+========================================= -->
+
+<footer>
+
+    <span>
+        AEGIS © 2026 · EXCHANGE INTELLIGENCE
+    </span>
+
+    <span>
+        REAL MARKET REFERENCE · SIMULATED TRADING
+    </span>
+
+</footer>
+
+<!-- =========================================
+     22. JAVASCRIPT
+========================================= -->
+
+<script>
+
+/* -----------------------------------------
+   API CONFIGURATION
+----------------------------------------- */
+
+const API =
+    window.location.protocol === "file:"
+        ? "http://127.0.0.1:8000"
+        : window.location.origin;
+
+let priceHistory = [];
+
+
+/* -----------------------------------------
+   UTILITY FUNCTIONS
+----------------------------------------- */
+
+const money = value => {
+
+    if (
+        value === null ||
+        value === undefined ||
+        !Number.isFinite(Number(value))
+    ) {
+        return "—";
+    }
+
+    return "$" + Number(value).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+
+};
+
+
+function setText(id, value) {
+
+    const element = document.getElementById(id);
+
+    if (element) {
+        element.textContent = value;
+    }
+
+}
+
+
+/* -----------------------------------------
+   MARKET DATA
+----------------------------------------- */
+
+async function fetchMarket() {
+
+    try {
+
+        const response = await fetch(
+            `${API}/market`,
+            { cache: "no-store" }
+        );
+
+        if (!response.ok) {
+            throw new Error("Market endpoint unavailable");
+        }
+
+        const data = await response.json();
+
+        const price = Number(data.price);
+
+        if (!Number.isFinite(price)) {
+            throw new Error("Invalid market price");
+        }
+
+        setText("topPrice", money(price));
+        setText("marketPrice", money(price));
+
+        setText(
+            "priceSource",
+            `${data.source || "Market provider"} · ${
+                data.is_live ? "LIVE SNAPSHOT" : "RECORDED DATA"
+            }`
+        );
+
+        setText(
+            "marketSource",
+            `${data.source || "Market provider"} · ${
+                data.is_live ? "Live reference" : "Recorded reference"
+            }`
+        );
+
+        setText(
+            "provider",
+            (data.source || "UNKNOWN").toUpperCase()
+        );
+
+        setText(
+            "connection",
+            data.is_live ? "MARKET LIVE" : "RECORDED DATA"
+        );
+
+        setText(
+            "marketStatus",
+            data.is_live ? "LIVE" : "RECORDED"
+        );
+
+        priceHistory.push(price);
+
+        if (priceHistory.length > 60) {
+            priceHistory.shift();
+        }
+
+        setText(
+            "lastUpdated",
+            "UPDATED " + new Date().toLocaleTimeString()
+        );
+
+        drawChart();
+
+    } catch (error) {
+
+        setText("connection", "MARKET OFFLINE");
+        setText("marketStatus", "UNAVAILABLE");
+
+        setText(
+            "priceSource",
+            "Unable to retrieve market data"
+        );
+
+        setText(
+            "marketSource",
+            "Market feed unavailable"
+        );
+
+    }
+
+}
+
+
+/* -----------------------------------------
+   MARKET PRICE CHART
+----------------------------------------- */
+
+function drawChart() {
+
+    const canvas = document.getElementById("priceChart");
+
+    const rect = canvas.getBoundingClientRect();
+
+    if (!rect.width || !rect.height) {
+        return;
+    }
+
+    const ratio = window.devicePixelRatio || 1;
+
+    canvas.width = rect.width * ratio;
+    canvas.height = rect.height * ratio;
+
+    const ctx = canvas.getContext("2d");
+
+    ctx.scale(ratio, ratio);
+
+    const width = rect.width;
+    const height = rect.height;
+
+    ctx.clearRect(0, 0, width, height);
+
+
+    // Grid lines
+
+    for (let i = 1; i < 4; i++) {
+
+        const y = height * i / 4;
+
+        ctx.strokeStyle = "rgba(174,195,230,.09)";
+
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+
+    }
+
+
+    // Waiting state
+
+    if (priceHistory.length < 2) {
+
+        ctx.fillStyle = "#8995aa";
+        ctx.font = "12px DM Sans";
+
+        ctx.fillText(
+            "Collecting price snapshots...",
+            12,
+            height / 2
+        );
+
+        return;
+
+    }
+
+
+    // Calculate chart coordinates
+
+    const min = Math.min(...priceHistory);
+    const max = Math.max(...priceHistory);
+
+    const range = max - min || 1;
+
+    const points = priceHistory.map((price, index) => ({
+
+        x: index / (priceHistory.length - 1) * width,
+
+        y: height - 12 -
+            ((price - min) / range) * (height - 24)
+
+    }));
+
+
+    // Gradient line
+
+    const gradient = ctx.createLinearGradient(
+        0, 0, width, 0
+    );
+
+    gradient.addColorStop(0, "#a78bfa");
+    gradient.addColorStop(0.5, "#5de3f2");
+    gradient.addColorStop(1, "#65f2c2");
+
+
+    // Draw price line
+
+    ctx.beginPath();
+
+    points.forEach((point, index) => {
+
+        if (index === 0) {
+            ctx.moveTo(point.x, point.y);
+        } else {
+            ctx.lineTo(point.x, point.y);
+        }
+
+    });
+
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 2.4;
+
+    ctx.shadowColor = "#5de3f2";
+    ctx.shadowBlur = 15;
+
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+
+    // Area underneath line
+
+    const fill = ctx.createLinearGradient(
+        0, 0, 0, height
+    );
+
+    fill.addColorStop(
+        0,
+        "rgba(93,227,242,.18)"
+    );
+
+    fill.addColorStop(
+        1,
+        "rgba(93,227,242,0)"
+    );
+
+    const last = points[points.length - 1];
+
+    ctx.lineTo(width, height);
+    ctx.lineTo(0, height);
+    ctx.closePath();
+
+    ctx.fillStyle = fill;
+    ctx.fill();
+
+
+    // Latest price indicator
+
+    ctx.beginPath();
+
+    ctx.arc(
+        last.x,
+        last.y,
+        4,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "#a8fff0";
+
+    ctx.shadowColor = "#65f2c2";
+    ctx.shadowBlur = 18;
+
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+}
+
+
+/* -----------------------------------------
+   TRADE TABLE
+----------------------------------------- */
+
+function renderTrades(results) {
+
+    const trades = [];
+
+    for (const result of (results || [])) {
+
+        for (const trade of (result.trades || [])) {
+            trades.push(trade);
+        }
+
+    }
+
+    const tbody = document.getElementById("tradeTable");
+
+    if (!trades.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty">
+                    No trades generated in this run.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML = trades
+        .slice(-30)
+        .reverse()
+        .map(trade => `
+
+            <tr>
+
+                <td class="cyan">
+                    #${trade.trade_seq}
+                </td>
+
+                <td>
+                    ${trade.buy_id}
+                </td>
+
+                <td>
+                    ${trade.sell_id}
+                </td>
+
+                <td>
+                    ${trade.qty}
+                </td>
+
+                <td class="lime">
+                    ${money(Number(trade.price) / 100)}
+                </td>
+
+                <td>
+                    ${trade.event_seq}
+                </td>
+
+            </tr>
+
+        `)
+        .join("");
+
+}
+
+
+/* -----------------------------------------
+   ORDER TABLE
+----------------------------------------- */
+
+function renderOrders(results) {
+
+    const latest = new Map();
+
+    for (const result of (results || [])) {
+
+        for (const order of (result.order_updates || [])) {
+
+            latest.set(order.id, order);
+
+        }
+
+    }
+
+    const orders = [...latest.values()]
+        .slice(-30)
+        .reverse();
+
+    const tbody = document.getElementById("orderTable");
+
+    if (!orders.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty">
+                    No order updates available.
+                </td>
+            </tr>
+        `;
+
+        return;
+
+    }
+
+
+    tbody.innerHTML = orders.map(order => `
+
+        <tr>
+
+            <td class="cyan">
+                #${order.id}
+            </td>
+
+            <td>
+                ${order.status}
+            </td>
+
+            <td class="lime">
+                ${order.executed_qty}
+            </td>
+
+            <td>
+                ${order.remaining_qty}
+            </td>
+
+            <td class="amber">
+                ${order.cancelled_qty}
+            </td>
+
+        </tr>
+
+    `).join("");
+
+}
+
+
+/* -----------------------------------------
+   RUN SIMULATION
+----------------------------------------- */
+
+async function runSimulation() {
+
+    const button = document.getElementById("runButton");
+
+    const status = document.getElementById("runStatus");
+
+    const count = Number(
+        document.getElementById("eventCount").value
+    );
+
+
+    button.disabled = true;
+    button.textContent = "RUNNING...";
+
+    status.textContent =
+        "Generating events and comparing all three engines...";
+
+
+    try {
+
+        const response = await fetch(
+            `${API}/simulate`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    seed: 42,
+                    event_count: count
+                })
+            }
+        );
+
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.detail || "Simulation request failed"
+            );
+        }
+
+
+        // Verification results
+
+        const verification = data.verification || {};
+
+        const invariants = data.invariants || {};
+
+        const matched = verification.matched === true;
+
+        const valid = invariants.valid === true;
+
+
+        // Dashboard metrics
+
+        setText(
+            "eventMetric",
+            count.toLocaleString()
+        );
+
+        setText(
+            "agreementMetric",
+            matched ? "100%" : "FAILED"
+        );
+
+        setText(
+            "invariantMetric",
+            valid ? "PASS" : "FAIL"
+        );
+
+        setText(
+            "invariantNote",
+            valid
+                ? "No invariant violations"
+                : "Violations detected"
+        );
+
+
+        // System integrity
+
+        setText(
+            "integrityAgreement",
+            matched ? "MATCHED" : "MISMATCH"
+        );
+
+        setText(
+            "integrityInvariant",
+            valid ? "VALID" : "INVALID"
+        );
+
+        setText(
+            "integrityEvents",
+            count.toLocaleString()
+        );
+
+
+        setText(
+            "integrityMismatch",
+            verification.first_mismatch === null ||
+            verification.first_mismatch === undefined
+                ? "NONE"
+                : String(verification.first_mismatch)
+        );
+
+
+        // Engine statuses
+
+        [
+            "pythonStatus",
+            "referenceStatus",
+            "cppStatus"
+        ].forEach(id => {
+
+            const element = document.getElementById(id);
+
+            element.textContent = matched
+                ? "MATCHED"
+                : "CHECK";
+
+            element.classList.toggle(
+                "fail",
+                !matched
+            );
+
+        });
+
+
+        // Verification message
+
+        setText(
+            "verificationStatus",
+
+            matched && valid
+
+                ? `VERIFICATION PASSED. All three engines agree across ${count} events. Invariant validation passed.`
+
+                : `VERIFICATION NEEDS ATTENTION. Agreement: ${matched}. Invariants: ${valid}.`
+        );
+
+
+        // Simulation status
+
+        status.textContent = matched && valid
+
+            ? `AEGIS completed ${count} events. All three engines agree and invariant checks passed.`
+
+            : "Simulation completed, but a verification issue was reported. Inspect the verification panel.";
+
+
+        // Update tables
+
+        renderTrades(
+            data.simulation?.results || []
+        );
+
+        renderOrders(
+            data.simulation?.results || []
+        );
+
+
+    } catch (error) {
+
+        status.textContent =
+            "Simulation error: " + error.message;
+
+        setText(
+            "verificationStatus",
+            error.message
+        );
+
+    } finally {
+
+        button.disabled = false;
+        button.textContent = "RUN AEGIS →";
+
+    }
+
+}
+
+
+/* -----------------------------------------
+   INITIALIZATION
+----------------------------------------- */
+
+window.addEventListener(
+    "resize",
+    drawChart
+);
+
+fetchMarket();
+
+setInterval(
+    fetchMarket,
+    5000
+);
+
+</script>
+
+</body>
+</html>

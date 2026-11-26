@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from copy import deepcopy
 
 from aegis.exchange import Exchange
+from aegis.reference import ReferenceExchange
 from aegis.invariants import check_exchange
 
 
@@ -68,12 +69,7 @@ def make_events():
 
 
 def expected_trade_signature():
-    """
-    Expected FIFO executions.
-
-    Order 1 arrived before order 2, so it executes first.
-    The incoming buy order has quantity 7.
-    """
+    """Expected FIFO executions."""
 
     return [
         (1, 5, 3, 100),
@@ -100,12 +96,14 @@ def check_expected_behavior(exchange):
     actual = actual_trade_signature(exchange)
 
     if actual != expected:
-        violations.append(
-            "EXPECTED_TRADE_SEQUENCE_MISMATCH"
-        )
+        violations.append("EXPECTED_TRADE_SEQUENCE_MISMATCH")
 
     return violations
 
+
+# ============================================================
+# ORIGINAL PYTHON ENGINE MUTANTS
+# ============================================================
 
 def run_correct_engine(events):
     exchange = Exchange()
@@ -124,9 +122,7 @@ def run_priority_mutant(events):
     for event in events[:2]:
         exchange.process_event(deepcopy(event))
 
-    # Corrupt the arrival sequence of the second resting order.
     exchange.orders[2].sequence = 0
-
     exchange.process_event(deepcopy(events[2]))
 
     return exchange
@@ -177,7 +173,7 @@ def run_empty_order_mutant(events):
     return exchange
 
 
-MUTANTS = [
+PYTHON_MUTANTS = [
     ("reversed_fifo_priority", run_priority_mutant),
     ("wrong_execution_price", run_wrong_price_mutant),
     ("wrong_execution_quantity", run_wrong_quantity_mutant),
@@ -185,14 +181,99 @@ MUTANTS = [
     ("empty_resting_order", run_empty_order_mutant),
 ]
 
+# Backward compatibility with existing tests.
+MUTANTS = PYTHON_MUTANTS
 
-def run_mutation_tests():
+
+# ============================================================
+# INDEPENDENT REFERENCE ENGINE MUTANTS
+# ============================================================
+
+def run_correct_reference(events):
+    exchange = ReferenceExchange()
+
+    for event in events:
+        exchange.process_event(deepcopy(event))
+
+    return exchange
+
+
+def run_reference_priority_mutant(events):
+    """Intentionally reverse FIFO priority."""
+
+    exchange = ReferenceExchange()
+
+    for event in events[:2]:
+        exchange.process_event(deepcopy(event))
+
+    exchange.orders[2].sequence = 0
+    exchange.process_event(deepcopy(events[2]))
+
+    return exchange
+
+
+def run_reference_wrong_price_mutant(events):
+    """Intentionally corrupt an execution price."""
+
+    exchange = run_correct_reference(events)
+
+    if exchange.trades:
+        exchange.trades[0].price += 1
+
+    return exchange
+
+
+def run_reference_wrong_quantity_mutant(events):
+    """Intentionally corrupt an execution quantity."""
+
+    exchange = run_correct_reference(events)
+
+    if exchange.trades:
+        exchange.trades[0].qty += 1
+
+    return exchange
+
+
+def run_reference_missing_history_mutant(events):
+    """Intentionally remove an accepted order from history."""
+
+    exchange = run_correct_reference(events)
+    exchange.orders.pop(1, None)
+
+    return exchange
+
+
+def run_reference_empty_order_mutant(events):
+    """Intentionally leave an invalid empty order."""
+
+    exchange = ReferenceExchange()
+
+    for event in events[:2]:
+        exchange.process_event(deepcopy(event))
+
+    order = exchange.orders[1]
+    order.remaining_qty = 0
+
+    return exchange
+
+
+REFERENCE_MUTANTS = [
+    ("reference_reversed_fifo_priority", run_reference_priority_mutant),
+    ("reference_wrong_execution_price", run_reference_wrong_price_mutant),
+    ("reference_wrong_execution_quantity", run_reference_wrong_quantity_mutant),
+    ("reference_missing_order_history", run_reference_missing_history_mutant),
+    ("reference_empty_resting_order", run_reference_empty_order_mutant),
+]
+
+
+# ============================================================
+# MUTATION TEST RUNNER
+# ============================================================
+
+def _run_mutant_group(mutants, events, correct_runner):
     results = []
-    events = make_events()
 
-    # Verify the unmodified engine first.
-    correct = run_correct_engine(events)
-
+    correct = correct_runner(events)
     correct_report = check_exchange(correct)
 
     if correct_report.violations:
@@ -209,21 +290,19 @@ def run_mutation_tests():
             + ", ".join(behavior_violations)
         )
 
-    for name, mutant in MUTANTS:
+    for name, mutant in mutants:
         violations = []
         detection_methods = []
 
         try:
             exchange = mutant(events)
 
-            # Check exchange invariants.
             invariant_report = check_exchange(exchange)
 
             if invariant_report.violations:
                 violations.extend(invariant_report.violations)
                 detection_methods.append("INVARIANT_CHECKER")
 
-            # Check explicit expected behaviour.
             behavior_errors = check_expected_behavior(exchange)
 
             if behavior_errors:
@@ -248,14 +327,36 @@ def run_mutation_tests():
     return MutationReport(results)
 
 
+def run_mutation_tests():
+    """Run the original five Python exchange mutants."""
+
+    return _run_mutant_group(
+        PYTHON_MUTANTS,
+        make_events(),
+        run_correct_engine,
+    )
+
+
+def run_reference_mutation_tests():
+    """Run five reference-engine mutation cases."""
+
+    return _run_mutant_group(
+        REFERENCE_MUTANTS,
+        make_events(),
+        run_correct_reference,
+    )
+
+
+# ============================================================
+# REPORT
+# ============================================================
+
 def print_mutation_report(report):
     print("\n========== AEGIS MUTATION REPORT ==========")
-
     print(f"Total mutants:       {report.total}")
     print(f"Detected:            {report.detected}")
     print(f"Survived:            {report.survived}")
     print(f"Detection score:     {report.score:.1f}%")
-
     print("-------------------------------------------")
 
     for result in report.results:

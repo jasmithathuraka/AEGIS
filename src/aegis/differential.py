@@ -5,6 +5,7 @@ from pathlib import Path
 
 from aegis.exchange import Exchange
 from aegis.generator import generate_events
+from aegis.reference import run_reference_engine
 
 
 class DifferentialError(RuntimeError):
@@ -48,6 +49,7 @@ def python_result(event, exchange):
 
 def run_python_engine(events):
     exchange = Exchange()
+
     return [
         python_result(event, exchange)
         for event in events
@@ -93,36 +95,48 @@ def run_cpp_engine(events, executable="aegis_cpp_jsonl"):
 
 
 def compare_engines(events, executable="aegis_cpp_jsonl"):
-    python_results = run_python_engine(events)
-    cpp_results = run_cpp_engine(events, executable)
+    results = {
+        "Python": run_python_engine(events),
+        "Reference": run_reference_engine(events),
+        "C++": run_cpp_engine(events, executable),
+    }
 
-    if len(python_results) != len(cpp_results):
-        return {
-            "matched": False,
-            "reason": "RESULT_COUNT_MISMATCH",
-            "python_count": len(python_results),
-            "cpp_count": len(cpp_results),
-            "first_mismatch": None,
-        }
+    python_results = results["Python"]
 
-    for index, (python_result_item, cpp_result_item) in enumerate(
-        zip(python_results, cpp_results)
-    ):
-        if python_result_item != cpp_result_item:
+    for engine_name, engine_results in results.items():
+        if len(python_results) != len(engine_results):
             return {
                 "matched": False,
-                "reason": "EVENT_RESULT_MISMATCH",
-                "event_index": index,
-                "event": events[index],
-                "python_result": python_result_item,
-                "cpp_result": cpp_result_item,
-                "first_mismatch": index,
+                "reason": "RESULT_COUNT_MISMATCH",
+                "engine": engine_name,
+                "python_count": len(python_results),
+                "engine_count": len(engine_results),
+                "first_mismatch": None,
             }
+
+    for index in range(len(events)):
+        expected = python_results[index]
+
+        for engine_name in ("Reference", "C++"):
+            actual = results[engine_name][index]
+
+            if expected != actual:
+                return {
+                    "matched": False,
+                    "reason": "EVENT_RESULT_MISMATCH",
+                    "engine": engine_name,
+                    "event_index": index,
+                    "event": events[index],
+                    "python_result": expected,
+                    "engine_result": actual,
+                    "first_mismatch": index,
+                }
 
     return {
         "matched": True,
         "reason": None,
         "event_count": len(events),
+        "engines": ["Python", "Reference", "C++"],
         "first_mismatch": None,
     }
 
