@@ -29,28 +29,28 @@ The project goes beyond implementing exchange functionality. It includes a separ
 ## Architecture
 
 ```text
-                    AEGIS
-                      |
-          +-----------+-----------+
-          |                       |
-     Exchange Engines       Verification Layer
-          |                       |
-     +----+----+          +-------+--------+
-     |         |          |       |        |
-   Python     C++      Invariant  Differential
-   Engine    Engine     Checking   Testing
-     |         |          |       |
-     +----+----+          +-------+--------+
-          |                       |
-       Event Processing      Adversarial Testing
-                                  |
-                         +--------+--------+
-                         |                 |
-                      Shrinker        Mutation Testing
-                         |                 |
-                         +--------+--------+
-                                  |
-                            Test Reports
+                         AEGIS
+                           |
+             +-------------+-------------+
+             |                           |
+       Exchange Engines            Verification Layer
+             |                           |
+       +-----+-----+             +-------+--------+
+       |           |             |       |        |
+     Python       C++         Invariant Differential
+     Engine      Engine        Checking   Testing
+       |           |                 |
+       +-----+-----+                 |
+             |                       |
+       Event Processing        Adversarial Testing
+                                     |
+                            +--------+--------+
+                            |                 |
+                         Shrinker        Mutation Testing
+                            |                 |
+                            +--------+--------+
+                                     |
+                                Test Reports
 ```
 
 ### Exchange implementations
@@ -64,6 +64,8 @@ Provides an implementation of the exchange logic and serves as one side of diffe
 Provides an independently implemented exchange engine with an indexed order book and rollback handling for tested internal failures.
 
 Both implementations follow the same documented exchange rules.
+
+---
 
 ## Verification and Testing
 
@@ -108,6 +110,8 @@ The C++ mutation suite currently detects all five implemented mutants.
 
 This score applies to the five implemented mutants, not every possible exchange defect.
 
+---
+
 ## Testing Results
 
 The following results were observed during local testing:
@@ -121,21 +125,37 @@ The following results were observed during local testing:
 
 The GitHub Actions CI workflow also completed successfully.
 
+---
+
 ## Performance Benchmarking
 
-AEGIS includes a benchmark comparing the Python and C++ exchange engines over generated event workloads.
+AEGIS includes a benchmark comparing the Python and C++ exchange implementations over deterministic generated event workloads.
 
-Observed results from one benchmark run:
+### Methodology
 
-| Events | Python | C++ | Observed ratio |
+- Deterministic workloads generated using seed 42.
+- Two warm-up runs per implementation.
+- Seven measured repetitions per workload.
+- Median execution time reported.
+- Execution order alternates between Python and C++.
+- Event generation and JSON input parsing are excluded from timing.
+- Complete final order state and trade history are compared.
+
+### Observed Results
+
+| Events | Python median | C++ median | Observed ratio |
 |---:|---:|---:|---:|
-| 1,000 | 0.017544 s | 0.000323 s | 54.34× |
-| 5,000 | 0.347422 s | 0.001576 s | 220.50× |
-| 10,000 | 1.368213 s | 0.003327 s | 411.20× |
+| 1,000 | 0.016041 s | 0.000306 s | 52.36× |
+| 5,000 | 0.345453 s | 0.001589 s | 217.36× |
+| 10,000 | 1.364677 s | 0.003332 s | 409.60× |
 
-These are measurements from the current benchmark setup, not universal performance claims.
+All three workloads completed with matching final exchange states.
 
-**Benchmark limitation:** The benchmark compares engine-loop timings, but the Python implementation constructs event results that the C++ benchmark driver does not retain. It also verifies complete final exchange states rather than comparing every intermediate event result. The ratios should therefore be interpreted as preliminary measurements, not a fully workload-equivalent performance comparison.
+**Limitations:** These measurements compare the current Python and C++ implementations, not universally equivalent workloads. Python constructs event-result objects and dictionary-based order updates, while the C++ benchmark constructs full order-update objects. The benchmark compares complete final states rather than every intermediate event result.
+
+The observed ratios should therefore be treated as implementation-specific measurements, not universal performance claims.
+
+---
 
 ## Project Structure
 
@@ -148,6 +168,8 @@ AEGIS/
 │   ├── benchmark.py
 │   └── cpp_mutation.py
 ├── bugs/
+│   ├── README.md
+│   └── mutation-cases.md
 ├── cpp/
 │   ├── include/
 │   ├── src/
@@ -170,6 +192,8 @@ AEGIS/
 └── README.md
 ```
 
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -178,6 +202,7 @@ AEGIS/
 - pytest
 - A C++20-compatible compiler
 - nlohmann/json headers for the C++ JSONL integration tests
+- GNU Make
 
 ### Setup
 
@@ -199,6 +224,12 @@ Install the Python test dependency:
 
 ```bash
 python -m pip install pytest
+```
+
+On macOS with Homebrew, install the JSON library if needed:
+
+```bash
+brew install nlohmann-json
 ```
 
 ### Run tests
@@ -227,11 +258,15 @@ PYTHONPATH=src python benchmarks/cpp_mutation.py
 PYTHONPATH=src python benchmarks/benchmark.py
 ```
 
+---
+
 ## Continuous Integration
 
 AEGIS uses GitHub Actions to automatically execute its test workflow on pushes and pull requests.
 
 The CI workflow builds and tests the C++ engine, runs the Python and integration test suite, and executes the C++ mutation tests.
+
+---
 
 ## Design Principles
 
@@ -240,6 +275,8 @@ The CI workflow builds and tests the C++ engine, runs the Python and integration
 - **Independent implementations:** Use separate Python and C++ engines to enable differential verification.
 - **Adversarial thinking:** Test deliberate failure modes rather than only expected inputs.
 - **Evidence over claims:** Report measured results with their limitations.
+
+---
 
 ## Future Improvements
 
